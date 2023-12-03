@@ -1,3 +1,6 @@
+/*
+  Find the sum of the power of the minimum amount of cubes of each color across all games.
+*/
 const fs = require('fs');
 
 function parseInput(lines) {

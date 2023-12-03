@@ -1,3 +1,7 @@
+/*
+  Review the input data and calculate the sum of the IDs of the possible games.
+*/
+
 const fs = require('fs');
 
 function parseInput(lines) {
