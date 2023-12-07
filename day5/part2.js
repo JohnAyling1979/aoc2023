@@ -1,6 +1,37 @@
 /*
   Description:
 */
+// May still have issues but it works for the given input
+const fs = require('fs');
+
+const lines = fs.readFileSync('./data', 'utf8').split('\n');
+
+function processValues(values, map) {
+  const newValues = [];
+
+  values.forEach(value => {
+    const [valueStart, valueEnd] = value.split(' ').map(Number);
+
+    const keys = getMapKeys(map, valueStart, valueEnd);
+    if (keys.length === 0) {
+      newValues.push(value);
+    }
+    console.log('keys', keys);
+    const splitValues = [...new Set(splitValue(value, keys).flat())];
+
+    console.log('splitValues', value, splitValues);
+    console.log('');
+
+    splitValues.forEach(splitValue => {
+      const [splitStart, splitEnd] = splitValue.split(' ').map(Number);
+
+      newValues.push(mapKeys(keys, map, splitStart, splitEnd));
+    });
+  });
+
+  return newValues;
+}
+
 function getMapKeys(map, start, end) {
   return Object.keys(map).filter(key => {
     const [keyStart, keyEnd] = key.split(' ').map(Number);
@@ -11,37 +42,53 @@ function getMapKeys(map, start, end) {
       return true;
     } else if (end >= keyStart && end <= keyEnd) {
       return true;
+    } else if (start <= keyStart && end >= keyEnd) {
+      return true;
     }
   });
 }
 
+function splitValue(value, keys) {
+  const splitValues = [];
+  const [valueStart, valueEnd] = value.split(' ').map(Number);
+  keys.forEach(key => {
+    const [keyStart, keyEnd] = key.split(' ').map(Number);
+
+    if (valueStart >= keyStart && valueEnd <= keyEnd) {
+      splitValues.push(`${valueStart} ${valueEnd}`);
+    } else if (valueStart >= keyStart && valueStart <= keyEnd) {
+      splitValues.push(`${valueStart} ${keyEnd}`);
+      splitValues.push(`${keyEnd + 1} ${valueEnd}`);
+    } else if (valueEnd >= keyStart && valueEnd <= keyEnd) {
+      splitValues.push(`${valueStart} ${keyStart - 1}`);
+      splitValues.push(`${keyStart} ${valueEnd}`);
+    } else if (valueStart <= keyStart && valueEnd >= keyEnd) {
+      splitValues.push(`${valueStart} ${keyStart - 1}`);
+      splitValues.push(`${keyStart} ${keyEnd}`);
+      splitValues.push(`${keyEnd + 1} ${valueEnd}`);
+    }
+  });
+
+  return splitValues;
+}
+
 function mapKeys(keys, map, start, end) {
-  return keys.map(key => {
+  const newValues = [];
+
+  keys.forEach(key => {
     const [keyStart, keyEnd] = key.split(' ').map(Number);
 
     if (start >= keyStart && end <= keyEnd) {
-      return [
-        `${start + map[key]} ${end + map[key]}`,
-      ];
-    } else if (start >= keyStart && start <= keyEnd) {
-      return [
-        `${start + map[key]} ${keyEnd + map[key]}`,
-        ...mapKeys(keys, map, keyEnd + 1, end),
-      ];
-    } else if (end >= keyStart && end <= keyEnd) {
-      return [
-        `${keyStart + map[key]} ${end + map[key]}`,
-        ...mapKeys(keys, map, start, keyStart - 1),
-      ];
+      newValues.push(`${start + map[key]} ${end + map[key]}`);
     }
+  });
 
-    return [`${start} ${end}`];
-  }).flat();
+  if (newValues.length === 0) {
+    newValues.push(`${start} ${end}`);
+  }
+
+  return newValues[0];
 }
-
-const fs = require('fs');
-
-const lines = fs.readFileSync('./data', 'utf8').split('\n');
 
 const seedList = lines.shift();
 
@@ -80,107 +127,35 @@ lines.forEach(line => {
   if (!/\d/.test(line)) {
     switch (step) {
       case 'seed-to-soil map:':
-        const soils = values.map(seed => {
-          const [seedStart, seedEnd] = seed.split(' ').map(Number);
-
-          const keys = getMapKeys(seedToSoil, seedStart, seedEnd);
-
-          if (keys.length === 0) {
-            return seed;
-          }
-
-          return mapKeys(keys, seedToSoil, seedStart, seedEnd);
-        });
-
-        values = [...new Set(soils.flat())];
+        values = processValues(values, seedToSoil);
 
         console.log('soils', values);
-      break;
+        break;
       case 'soil-to-fertilizer map:':
-        const fertilizers = values.map(soil => {
-          const [soilStart, soilEnd] = soil.split(' ').map(Number);
-
-          const keys = getMapKeys(soilToFertilizer, soilStart, soilEnd);
-
-          if (keys.length === 0) {
-            return soil;
-          }
-
-          return mapKeys(keys, soilToFertilizer, soilStart, soilEnd);
-        });
-
-        values = [...new Set(fertilizers.flat())];
+        values = processValues(values, soilToFertilizer);
 
         console.log('fertilizer', values);
-      break;
+        break;
       case 'fertilizer-to-water map:':
-        const waters = values.map(fertilizer => {
-          const [fertilizerStart, fertilizerEnd] = fertilizer.split(' ').map(Number);
-
-          const keys = getMapKeys(fertilizerToWater, fertilizerStart, fertilizerEnd);
-
-          if (keys.length === 0) {
-            return fertilizer;
-          }
-
-          return mapKeys(keys, fertilizerToWater, fertilizerStart, fertilizerEnd);
-        });
-
-        values = [...new Set(waters.flat())];
+        values = processValues(values, fertilizerToWater);
 
         console.log('water', values);
-      break;
+        break;
       case 'water-to-light map:':
-        const lights = values.map(water => {
-          const [waterStart, waterEnd] = water.split(' ').map(Number);
-
-          const keys = getMapKeys(waterToLight, waterStart, waterEnd);
-
-          if (keys.length === 0) {
-            return water;
-          }
-
-          return mapKeys(keys, waterToLight, waterStart, waterEnd);
-        });
-
-        values = [...new Set(lights.flat())];
+        values = processValues(values, waterToLight);
 
         console.log('light', values);
-      break;
+        break;
       case 'light-to-temperature map:':
-        const temperatures = values.map(light => {
-          const [lightStart, lightEnd] = light.split(' ').map(Number);
-
-          const keys = getMapKeys(lightToTemperature, lightStart, lightEnd);
-
-          if (keys.length === 0) {
-            return light;
-          }
-
-          return mapKeys(keys, lightToTemperature, lightStart, lightEnd);
-        });
-
-        values = [...new Set(temperatures.flat())];
+        values = processValues(values, lightToTemperature);
 
         console.log('temperature', values);
-      break;
+        break;
       case 'temperature-to-humidity map:':
-        const humidities = values.map(temperature => {
-          const [temperatureStart, temperatureEnd] = temperature.split(' ').map(Number);
-
-          const keys = getMapKeys(temperatureToHumidity, temperatureStart, temperatureEnd);
-
-          if (keys.length === 0) {
-            return temperature;
-          }
-
-          return mapKeys(keys, temperatureToHumidity, temperatureStart, temperatureEnd);
-        });
-
-        values = [...new Set(humidities.flat())];
+        values = processValues(values, temperatureToHumidity);
 
         console.log('humidity', values);
-      break;
+        break;
     }
 
     step = line;
@@ -228,29 +203,9 @@ lines.forEach(line => {
 });
 
 // humidity-to-location map:
-const locations = values.map(humidity => {
-  const [humidityStart, humidityEnd] = humidity.split(' ').map(Number);
-
-  const keys = getMapKeys(humidityToLocation, humidityStart, humidityEnd);
-
-  if (keys.length === 0) {
-    return humidity;
-  }
-
-  return mapKeys(keys, humidityToLocation, humidityStart, humidityEnd);
-});
-
-values = [...new Set(locations.flat())];
+values = processValues(values, humidityToLocation);
 
 console.log('location', values);
 
 console.log('result = ', Math.min(...values.map(pair => pair.split(' ').map(Number)).flat()));
-
-// console.log('seedToSoil', seedToSoil);
-// console.log('soilToFertilizer', soilToFertilizer);
-// console.log('fertilizerToWater', fertilizerToWater);
-// console.log('waterToLight', waterToLight);
-// console.log('lightToTemperature', lightToTemperature);
-// console.log('temperatureToHumidity', temperatureToHumidity);
-// console.log('humidityToLocation', humidityToLocation);
 
