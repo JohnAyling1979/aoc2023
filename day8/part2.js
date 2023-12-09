@@ -15,7 +15,71 @@
 */
 const fs = require('fs');
 
-const lines = fs.readFileSync('./data', 'utf8').split('\n');
+const lines = fs.readFileSync('./test2', 'utf8').split('\n');
+
+function getStepsToEnd(startPathInfo, instructions, stopStep) {
+  if (startPathInfo.steps >= stopStep) {
+    return startPathInfo;
+  }
+
+  let steps = startPathInfo.steps;
+  let currentPath = startPathInfo.currentPath;
+
+  do {
+    const instructionIndex = steps % instructions.length;
+    const instruction = instructions[instructionIndex] ;
+
+    if (instruction === 'L') {
+      currentPath = paths[currentPath][0];
+    } else if (instruction === 'R') {
+      currentPath = paths[currentPath][1];
+    }
+
+    steps++;
+  } while(currentPath[2] !== 'Z')
+
+  return {
+    currentPath,
+    steps
+  };
+}
+
+async function process(currentPaths, instructions) {
+  let sameSteps = true;
+  let stopStep = Infinity
+
+  do {
+    const promises = [];
+
+    currentPaths.forEach((currentPath) => {
+      promises.push(new Promise((resolve, reject) => {
+        resolve(getStepsToEnd(currentPath, instructions, stopStep));
+      }));
+    });
+
+    currentPaths = await Promise.all(promises);
+
+    const steps = currentPaths[0].steps;
+    stopStep = steps;
+    sameSteps = true;
+
+    for (let i = 1; i < currentPaths.length; i++) {
+      if (currentPaths[i].steps !== steps || currentPaths[i].currentPath[2] !== 'Z') {
+        sameSteps = false;
+      }
+
+      if (currentPaths[i].steps > stopStep) {
+        stopStep = currentPaths[i].steps;
+      }
+    }
+
+    if (steps > 10) {
+      break;
+    }
+
+    console.log('result: ', currentPaths);
+  } while(!sameSteps);
+}
 
 const instructions = lines[0].split('');
 
@@ -26,42 +90,16 @@ const paths = {};
 
 let currentPaths = [];
 let ended = 0;
-let instructionIndex = 0;
 let steps = 0;
 
 lines.forEach((line) => {
   const [path, options] = line.split(' = ');
 
   if (path[2] === 'A') {
-    currentPaths.push(path);
+    currentPaths.push({ currentPath: path, steps: 0 });
   }
 
   paths[path] = options.split(', ').map((option) => option.match(/\w+/)[0])
 });
 
-while (ended !== currentPaths.length) {
-  const instruction = instructions[instructionIndex];
-  ended = 0;
-
-  currentPaths.forEach((currentPath, index) => {
-    if (instruction === 'L') {
-      currentPaths[index] = paths[currentPath][0];
-    } else if (instruction === 'R') {
-      currentPaths[index] = paths[currentPath][1];
-    }
-
-    if (currentPaths[index][2] === 'Z') {
-      ended++;
-    }
-  });
-
-  instructionIndex++;
-
-  if (instructionIndex === instructions.length) {
-    instructionIndex = 0;
-  }
-
-  steps++;
-}
-
-console.log(steps);
+process(currentPaths, instructions);
