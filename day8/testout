@@ -1,0 +1,6 @@
+result:  [
+  { currentPath: '11Z', steps: 6 },
+  { currentPath: '22Z', steps: 6 },
+  { currentPath: '33Z', steps: 6 },
+  { currentPath: 'CDZ', steps: 6 }
+]

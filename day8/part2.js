@@ -71,9 +71,9 @@ async function process(currentPaths, instructions) {
         stopStep = currentPaths[i].steps;
       }
     }
-
-    console.log('result: ', currentPaths);
   } while(!sameSteps);
+
+  console.log('result: ', currentPaths);
 }
 
 const instructions = lines[0].split('');
