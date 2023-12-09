@@ -59,22 +59,17 @@ async function process(currentPaths, instructions) {
 
     currentPaths = await Promise.all(promises);
 
-    const steps = currentPaths[0].steps;
-    stopStep = steps;
+    stopStep = currentPaths[0].steps;
     sameSteps = true;
 
     for (let i = 1; i < currentPaths.length; i++) {
-      if (currentPaths[i].steps !== steps || currentPaths[i].currentPath[2] !== 'Z') {
+      if (currentPaths[i].steps !== stopStep || currentPaths[i].currentPath[2] !== 'Z') {
         sameSteps = false;
       }
 
       if (currentPaths[i].steps > stopStep) {
         stopStep = currentPaths[i].steps;
       }
-    }
-
-    if (steps > 10) {
-      break;
     }
 
     console.log('result: ', currentPaths);
@@ -89,8 +84,6 @@ lines.shift();
 const paths = {};
 
 let currentPaths = [];
-let ended = 0;
-let steps = 0;
 
 lines.forEach((line) => {
   const [path, options] = line.split(' = ');
