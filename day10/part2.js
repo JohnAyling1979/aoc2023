@@ -3,23 +3,22 @@
 const fs = require('fs');
 
 let start;
-visited = {};
+const visited = {};
 
 const map = fs.readFileSync('./test3', 'utf8').split('\n').map((line, yIndex) => line.split('').map((char, xIndex) => {
   if (char === 'S') {
-    start = { x: xIndex, y: yIndex, step: 0 };
+    start = { x: xIndex, y: yIndex, direction: 'U' };
   }
 
   return char;
 }));
 
-const originalMap = map.map(line => line.map(char => char));
-
 function loadPaths(node) {
-  const { x, y, step } = node;
+  const { x, y, direction } = node;
   const next = [];
+  const key = `${x},${y}`;
 
-  if (visited[`${x},${y}`]) {
+  if (visited[key]) {
     return;
   }
 
@@ -29,143 +28,121 @@ function loadPaths(node) {
 
   if (location === 'S') {
     const up = y - 1;
-    const down = y + 1;
-    const left = x - 1;
-    const right = x + 1;
 
-    if (up >= 0 && map[up][x] !== '.') {
-      next.push({ x, y: up, step: step + 1 });
-    }
-
-    if (down < map.length && map[down][x] !== '.') {
-      next.push({ x, y: down, step: step + 1 });
-    }
-
-    if (left >= 0 && map[y][left] !== '.') {
-      next.push({ x: left, y, step: step + 1 });
-    }
-
-    if (right < map[y].length && map[y][right] !== '.') {
-      next.push({ x: right, y, step: step + 1 });
-    }
+    next.push({ x, y: up, direction: 'U' });
+    map[y][x] = 'U';
   } else if (location === '|') {
     const up = y - 1;
     const down = y + 1;
 
-    if (up >= 0 && map[up][x] !== '.') {
-      next.push({ x, y: up, step: step + 1 });
-    }
+    map[y][x] = direction;
 
-    if (down < map.length && map[down][x] !== '.') {
-      next.push({ x, y: down, step: step + 1 });
+    if (!visited[`${x},${up}`]) {
+      next.push({ x, y: up, direction });
+    } else {
+      next.push({ x, y: down, direction });
     }
   } else if (location === '-') {
     const left = x - 1;
     const right = x + 1;
 
-    if (left >= 0 && map[y][left] !== '.') {
-      next.push({ x: left, y, step: step + 1 });
-    }
+    map[y][x] = direction;
 
-    if (right < map[y].length && map[y][right] !== '.') {
-      next.push({ x: right, y, step: step + 1 });
+    if (!visited[`${left},${y}`]) {
+      next.push({ x: left, y, direction });
+    } else {
+      next.push({ x: right, y, direction });
     }
   } else if (location === 'L') {
     const up = y - 1;
     const right = x + 1;
 
-    if (up >= 0 && map[up][x] !== '.') {
-      next.push({ x, y: up, step: step + 1 });
-    }
-
-    if (right < map[y].length && map[y][right] !== '.') {
-      next.push({ x: right, y, step: step + 1 });
+    if (!visited[`${x},${up}`]) {
+      next.push({ x, y: up, direction: 'U' });
+      map[y][x] = 'U';
+    } else {
+      next.push({ x: right, y, direction: 'D' });
+      map[y][x] = 'D';
     }
   } else if (location === 'J') {
     const up = y - 1;
     const left = x - 1;
 
-    if (up >= 0 && map[up][x] !== '.') {
-      next.push({ x, y: up, step: step + 1 });
-    }
-
-    if (left >= 0 && map[y][left] !== '.') {
-      next.push({ x: left, y, step: step + 1 });
+    if (!visited[`${x},${up}`]) {
+      next.push({ x, y: up, direction: 'U' });
+      map[y][x] = 'U';
+    } else {
+      next.push({ x: left, y, direction: 'D' });
+      map[y][x] = 'D';
     }
   } else if (location === '7') {
     const down = y + 1;
     const left = x - 1;
 
-    if (down < map.length && map[down][x] !== '.') {
-      next.push({ x, y: down, step: step + 1 });
-    }
-
-    if (left >= 0 && map[y][left] !== '.') {
-      next.push({ x: left, y, step: step + 1 });
+    if (!visited[`${x},${down}`]) {
+      next.push({ x, y: down, direction: 'D' });
+      map[y][x] = 'D';
+    } else {
+      next.push({ x: left, y, direction: 'U' });
+      map[y][x] = 'U';
     }
   } else if (location === 'F') {
     const down = y + 1;
     const right = x + 1;
 
-    if (down < map.length && map[down][x] !== '.') {
-      next.push({ x, y: down, step: step + 1 });
-    }
-
-    if (right < map[y].length && map[y][right] !== '.') {
-      next.push({ x: right, y, step: step + 1 });
+    if (!visited[`${x},${down}`]) {
+      next.push({ x, y: down, direction: 'D' });
+      map[y][x] = 'D';
+    } else {
+      next.push({ x: right, y, direction: 'U'});
+      map[y][x] = 'U';
     }
   }
-
-  map[y][x] = 'X';
 
   next.forEach(loadPaths);
   return;
 };
 
-function floodFill(x, y) {
-  if (x < 0 || y < 0 || x >= map[0].length || y >= map.length) {
-    return;
-  }
-
-  const location = map[y][x];
-
-  if (location === 'X' || location === 'O') {
-    return;
-  }
-
-  map[y][x] = 'O';
-  const up = y - 1;
-  const down = y + 1;
-  const left = x - 1;
-  const right = x + 1;
-
-  floodFill(x, up);
-  floodFill(x, down);
-  floodFill(left, y);
-  floodFill(right, y);
-}
-
 loadPaths(start);
 
+let totalCount = 0;
+
 for (let y = 0; y < map.length; y++) {
+  let counting = false;
+  let direction = null;
+  let possible = [];
   for (let x = 0; x < map[y].length; x++) {
-    if (y === 0 || y === map.length - 1 || x === 0 || x === map[y].length - 1) {
-      floodFill(x, y);
+    char = map[y][x];
+    if (counting && !(char === 'U' || char === 'D')) {
+      possible.push(`${x},${y}`);
+    }
+
+    if (direction === null && (char === 'U' || char === 'D')) {
+      direction = char;
+      counting = true;
+    } else if (direction === 'U' && char === 'D') {
+      direction = null;
+      totalCount += possible.length;
+      counting = false;
+
+      possible.forEach(key => {
+        const [x, y] = key.split(',');
+        map[y][x] = 'X';
+      });
+
+      possible = [];
+    } else if (direction === 'D' && char === 'U') {
+      direction = null;
+      totalCount += possible.length;
+      counting = false;
+      possible.forEach(key => {
+        const [x, y] = key.split(',');
+        map[y][x] = 'X';
+      });
+      possible = [];
     }
   }
 }
-let count = 0;
-map.forEach((line, y) => line.forEach((char, x) => {
-  if (char === 'X' || char === 'O') {
-    if (char === 'X') {
-      map[y][x] = originalMap[y][x];
-    }
-    return;
-  }
-
-  count++;
-  map[y][x] = '#';
-}));
 
 console.log(map.map(line => line.join('')).join('\n'));
-console.log(count);
+console.log(totalCount);

@@ -31,25 +31,8 @@ function loadPaths(node) {
 
   if (location === 'S') {
     const up = y - 1;
-    const down = y + 1;
-    const left = x - 1;
-    const right = x + 1;
 
-    if (up >= 0 && map[up][x] !== '.') {
-      next.push({ x, y: up, step: step + 1 });
-    }
-
-    if (down < map.length && map[down][x] !== '.') {
-      next.push({ x, y: down, step: step + 1 });
-    }
-
-    if (left >= 0 && map[y][left] !== '.') {
-      next.push({ x: left, y, step: step + 1 });
-    }
-
-    if (right < map[y].length && map[y][right] !== '.') {
-      next.push({ x: right, y, step: step + 1 });
-    }
+    next.push({ x, y: up, step: step + 1 });
   } else if (location === '|') {
     const up = y - 1;
     const down = y + 1;
