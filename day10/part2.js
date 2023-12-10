@@ -5,7 +5,7 @@ const fs = require('fs');
 let start;
 visited = {};
 
-const map = fs.readFileSync('./data', 'utf8').split('\n').map((line, yIndex) => line.split('').map((char, xIndex) => {
+const map = fs.readFileSync('./test3', 'utf8').split('\n').map((line, yIndex) => line.split('').map((char, xIndex) => {
   if (char === 'S') {
     start = { x: xIndex, y: yIndex, step: 0 };
   }
