@@ -13,16 +13,16 @@ const map = fs.readFileSync('./data', 'utf8').split('\n').map((line, yIndex) => 
   return char;
 }));
 
-function floodFill(x, y) {
-  const directions = ['^', '>', 'v', '<'];
+const directions = ['^', 'v', 'X', 'O'];
 
+function floodFill(x, y) {
   if (x < 0 || y < 0 || x >= map[0].length || y >= map.length) {
     return;
   }
 
   const location = map[y][x];
 
-  if (directions.includes(location) || location === 'O') {
+  if (directions.includes(location)) {
     return;
   }
 
@@ -71,12 +71,12 @@ function loadPaths(node) {
     const left = x - 1;
     const right = x + 1;
 
+    map[y][x] = 'X';
+
     if (!visited[`${left},${y}`]) {
       next.push({ x: left, y, direction: '<' });
-      map[y][x] = '<';
     } else {
       next.push({ x: right, y, direction: '>' });
-      map[y][x] = '>';
     }
   } else if (location === 'L') {
     const up = y - 1;
@@ -86,8 +86,8 @@ function loadPaths(node) {
       next.push({ x, y: up, direction: '^' });
       map[y][x] = '^';
     } else {
-      next.push({ x: right, y, direction: '>' });
-      map[y][x] = '>';
+      next.push({ x: right, y, direction: 'v' });
+      map[y][x] = 'v';
     }
   } else if (location === 'J') {
     const up = y - 1;
@@ -97,8 +97,8 @@ function loadPaths(node) {
       next.push({ x, y: up, direction: '^' });
       map[y][x] = '^';
     } else {
-      next.push({ x: left, y, direction: '<' });
-      map[y][x] = '<';
+      next.push({ x: left, y, direction: 'v' });
+      map[y][x] = 'v';
     }
   } else if (location === '7') {
     const down = y + 1;
@@ -108,8 +108,8 @@ function loadPaths(node) {
       next.push({ x, y: down, direction: 'v' });
       map[y][x] = 'v';
     } else {
-      next.push({ x: left, y, direction: '<' });
-      map[y][x] = '<';
+      next.push({ x: left, y, direction: '^' });
+      map[y][x] = '^';
     }
   } else if (location === 'F') {
     const down = y + 1;
@@ -119,8 +119,8 @@ function loadPaths(node) {
       next.push({ x, y: down, direction: 'v' });
       map[y][x] = 'v';
     } else {
-      next.push({ x: right, y, direction: '>'});
-      map[y][x] = '>';
+      next.push({ x: right, y, direction: '^'});
+      map[y][x] = '^';
     }
   }
 
@@ -130,6 +130,7 @@ function loadPaths(node) {
 
 loadPaths(start);
 
+// Not needed for the solution, but it's nice to see the map
 for (let y = 0; y < map.length; y++) {
   for (let x = 0; x < map[y].length; x++) {
     if (y === 0 || y === map.length - 1 || x === 0 || x === map[y].length - 1) {
@@ -143,11 +144,12 @@ let totalCount = 0;
 for (let y = 0; y < map.length; y++) {
   const directionStack = [];
   let possible = []
+  let last = null;
   for (let x = 0; x < map[y].length; x++) {
     char = map[y][x];
 
     if (char === '^' || char === 'v') {
-      if (directionStack.length === 0) {
+      if (directionStack.length === 0 && last !== char) {
         directionStack.push(char);
         continue;
       } else {
@@ -161,9 +163,10 @@ for (let y = 0; y < map.length; y++) {
           });
           possible = [];
           directionStack.pop();
+          last = char;
         }
       }
-    } else if (char === '<' || char === '>' || char === 'O') {
+    } else if (directions.includes(char)) {
       // do nothing
     } else {
       if (directionStack.length > 0) {
@@ -173,5 +176,6 @@ for (let y = 0; y < map.length; y++) {
   }
 }
 
+map[start.y][start.x] = 'S';
 console.log(map.map(line => line.join('')).join('\n'));
 console.log(totalCount);
